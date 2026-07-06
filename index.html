@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Fear Dashboard: Cold War vs AI</title>
+  <style>
+    :root {
+      --bg: #f6f8fc;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #657289;
+      --line: #dce4f0;
+      --cold: #293f6f;
+      --ai25: #864d78;
+      --latest: #237b77;
+      --accent: #be7630;
+      --green: #227a56;
+      --red: #a04343;
+      --soft-cold: rgba(41, 63, 111, 0.10);
+      --soft-ai25: rgba(134, 77, 120, 0.11);
+      --soft-latest: rgba(35, 123, 119, 0.12);
+      --shadow: 0 18px 44px rgba(23, 32, 51, .10);
+      --radius: 22px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 0%, rgba(190,118,48,.18), transparent 32rem),
+        radial-gradient(circle at 95% 10%, rgba(35,123,119,.16), transparent 30rem),
+        var(--bg);
+      line-height: 1.55;
+    }
+    a { color: inherit; }
+    .page { max-width: 1180px; margin: 0 auto; padding: 28px; }
+    .hero {
+      margin-top: 18px;
+      padding: 42px;
+      border-radius: 30px;
+      background: linear-gradient(135deg, #172033 0%, #24395e 48%, #1f736f 100%);
+      color: white;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 340px;
+      height: 340px;
+      border-radius: 999px;
+      right: -130px;
+      top: -150px;
+      background: rgba(255,255,255,.11);
+    }
+    .eyebrow { text-transform: uppercase; letter-spacing: .14em; font-weight: 800; font-size: .78rem; opacity: .88; }
+    h1 { margin: 12px 0 16px; font-size: clamp(2.1rem, 5vw, 4.7rem); line-height: .98; letter-spacing: -.06em; max-width: 960px; }
+    h2 { margin: 0 0 8px; font-size: clamp(1.7rem, 3vw, 2.55rem); line-height: 1.05; letter-spacing: -.04em; }
+    h3 { margin: 0 0 10px; font-size: 1.08rem; }
+    p { margin: 0 0 12px; }
+    .hero p { max-width: 860px; font-size: 1.08rem; opacity: .94; }
+    .hero-meta, .tag-row, .legend, .stat-line { display: flex; flex-wrap: wrap; gap: 10px; }
+    .pill, .tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      border: 1px solid rgba(255,255,255,.24);
+      background: rgba(255,255,255,.12);
+      color: inherit;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: .86rem;
+      font-weight: 700;
+    }
+    .tag { background: #f3f6fb; border-color: var(--line); color: #354157; }
+    nav { position: sticky; top: 0; z-index: 10; backdrop-filter: blur(14px); background: rgba(246,248,252,.78); border-bottom: 1px solid rgba(220,228,240,.78); }
+    nav ul { list-style: none; max-width: 1180px; margin: 0 auto; padding: 12px 28px; display: flex; gap: 8px; overflow-x: auto; }
+    nav a { display: block; text-decoration: none; white-space: nowrap; font-weight: 800; color: #445066; background: white; border: 1px solid var(--line); border-radius: 999px; padding: 8px 13px; }
+    section { margin: 46px 0; }
+    .section-title { display: flex; justify-content: space-between; gap: 18px; align-items: end; margin-bottom: 18px; }
+    .section-title p { color: var(--muted); max-width: 820px; }
+    .grid { display: grid; gap: 18px; }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .card {
+      background: rgba(255,255,255,.94);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 22px;
+      box-shadow: var(--shadow);
+    }
+    .score-card { min-height: 248px; display: flex; flex-direction: column; justify-content: space-between; }
+    .score-card.cold { background: linear-gradient(180deg, var(--soft-cold), white 72%); }
+    .score-card.ai25 { background: linear-gradient(180deg, var(--soft-ai25), white 72%); }
+    .score-card.latest { background: linear-gradient(180deg, var(--soft-latest), white 72%); }
+    .period-label { color: var(--muted); font-weight: 900; letter-spacing: .02em; text-transform: uppercase; font-size: .78rem; }
+    .big-score { font-size: 3.55rem; font-weight: 900; letter-spacing: -.07em; margin: 4px 0; }
+    .big-score span { font-size: 1.15rem; color: var(--muted); letter-spacing: 0; margin-left: 3px; }
+    .mini-bar, .bar-track { height: 16px; background: #e9eef6; border-radius: 999px; overflow: hidden; border: 1px solid #dde5f0; }
+    .mini-fill { display: block; height: 100%; border-radius: inherit; width: 0; transition: width .9s cubic-bezier(.2,.75,.2,1); }
+    .cold-fill, .bar.cold { background: var(--cold); }
+    .ai25-fill, .bar.ai25 { background: var(--ai25); }
+    .latest-fill, .bar.latest { background: var(--latest); }
+    .automation-card { border-left: 8px solid var(--latest); }
+    .stat-line { margin-top: 12px; }
+    .stat { flex: 1 1 140px; background: #f6f8fc; border: 1px solid var(--line); border-radius: 18px; padding: 14px; }
+    .stat strong { display: block; font-size: 1.6rem; letter-spacing: -.04em; }
+    .stat span { color: var(--muted); font-size: .84rem; font-weight: 800; }
+    .insight { background: #fff8ee; border-color: #ead2b5; }
+    .chart-panel { padding: 0; overflow: hidden; }
+    .chart-header { padding: 22px 22px 0; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; align-items: start; }
+    .legend-item { display: inline-flex; align-items: center; gap: 8px; font-weight: 800; color: #455168; font-size: .9rem; }
+    .swatch { width: 12px; height: 12px; border-radius: 999px; }
+    .bar-chart { padding: 6px 22px 24px; }
+    .axis { margin-left: 245px; display: grid; grid-template-columns: repeat(5, 1fr); color: var(--muted); font-size: .78rem; font-weight: 800; padding: 10px 0; }
+    .bar-row { display: grid; grid-template-columns: 230px 1fr; gap: 16px; padding: 13px 0; border-top: 1px solid var(--line); }
+    .bar-label { font-weight: 900; }
+    .bar-label small { display: block; color: var(--muted); font-weight: 600; margin-top: 3px; }
+    .bars { display: grid; gap: 7px; align-content: center; }
+    .bar { height: 100%; width: 0; color: white; border-radius: inherit; font-size: .76rem; font-weight: 900; display: flex; justify-content: flex-end; align-items: center; padding-right: 8px; min-width: 36px; transition: width .9s cubic-bezier(.2,.75,.2,1); }
+    .comparison-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+    .focus-card ul { margin: 16px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+    .focus-card li { display: flex; justify-content: space-between; gap: 10px; border-top: 1px solid var(--line); padding-top: 10px; }
+    .focus-card li span { color: var(--muted); }
+    .focus-card li strong { white-space: nowrap; }
+    .icon { font-size: 2rem; margin-bottom: 8px; }
+    .shift { display: grid; grid-template-columns: 1fr auto 1fr; gap: 18px; align-items: stretch; }
+    .shift-box { background: white; border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); }
+    .arrow { align-self: center; font-size: 2rem; color: var(--accent); font-weight: 900; }
+    .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--line); background: white; box-shadow: var(--shadow); }
+    table { width: 100%; border-collapse: collapse; min-width: 920px; }
+    th, td { text-align: left; padding: 14px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { background: #eef3f9; font-size: .82rem; text-transform: uppercase; letter-spacing: .07em; }
+    td { font-size: .94rem; }
+    .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .up { color: var(--green); font-weight: 900; }
+    .down { color: var(--red); font-weight: 900; }
+    .number-note, footer { color: var(--muted); font-size: .9rem; }
+    .method-list { padding-left: 18px; margin: 0; }
+    .method-list li { margin-bottom: 12px; }
+    .method-list strong { display: block; }
+    footer { padding-bottom: 50px; }
+    .footgrid { border-top: 1px solid var(--line); padding-top: 18px; display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+    code { background: #eef3f9; padding: 2px 6px; border-radius: 8px; }
+    @media (max-width: 900px) {
+      .grid-2, .grid-3, .comparison-cards, .shift { grid-template-columns: 1fr; }
+      .arrow { transform: rotate(90deg); justify-self: center; }
+      .hero { padding: 30px; }
+      .bar-row { grid-template-columns: 1fr; gap: 8px; }
+      .axis { display: none; }
+      .chart-header { display: block; }
+    }
+    @media print { nav { display: none; } body { background: white; } .card, .table-wrap, .hero { box-shadow: none; } section { break-inside: avoid; } }
+  </style>
+</head>
+<body>
+  <script id="dashboard-data" type="application/json">
+{
+  "lastUpdated": "Initial static baseline: AI June 2026",
+  "methodNote": "Monthly GitHub Actions runs replace the latest AI values using newly scraped and categorized articles.",
+  "latestPeriod": "AI June 2026 baseline",
+  "latestShortLabel": "Latest AI",
+  "automation": {
+    "status": "Not run yet in this repository",
+    "documents": 51,
+    "codedRows": null,
+    "scrapedOk": null,
+    "sourcesFound": null,
+    "codingRunsPerArticle": "set in workflow"
+  },
+  "datasets": {
+    "cold": {
+      "label": "Cold War",
+      "shortLabel": "Cold War",
+      "className": "cold",
+      "score": 6.641,
+      "summary": "Nuclear fear centered on survival, global extinction, and geopolitical instability.",
+      "tags": [
+        "Survival",
+        "Extinction",
+        "Instability"
+      ],
+      "values": {
+        "likert": 6.641,
+        "survival": 0.898,
+        "existential": 0.089,
+        "extinction": 0.483,
+        "economic": 0.001,
+        "instability": 0.899,
+        "surveillance": 0.01,
+        "delegated": 0.045,
+        "information": 0.024,
+        "infrastructure": 0.006,
+        "none": 0.035
+      }
+    },
+    "ai25": {
+      "label": "AI 2025",
+      "shortLabel": "AI 2025",
+      "className": "ai25",
+      "score": 5.895,
+      "summary": "AI fear focused heavily on loss of human control, job disruption, and replacement.",
+      "tags": [
+        "Delegated agency",
+        "Economic crisis",
+        "Control"
+      ],
+      "values": {
+        "likert": 5.895,
+        "survival": 0.258,
+        "existential": 0.31,
+        "extinction": 0.137,
+        "economic": 0.517,
+        "instability": 0.392,
+        "surveillance": 0.082,
+        "delegated": 0.79,
+        "information": 0.215,
+        "infrastructure": 0.0,
+        "none": 0.002
+      }
+    },
+    "latest": {
+      "label": "AI June 2026 baseline",
+      "shortLabel": "Latest AI",
+      "className": "latest",
+      "score": 3.972,
+      "summary": "The latest AI comparison slot starts with the June 2026 paper baseline and is replaced by monthly automated runs.",
+      "tags": [
+        "Information disorder",
+        "Surveillance",
+        "Infrastructure"
+      ],
+      "values": {
+        "likert": 3.972,
+        "survival": 0.141,
+        "existential": 0.191,
+        "extinction": 0.032,
+        "economic": 0.329,
+        "instability": 0.233,
+        "surveillance": 0.168,
+        "delegated": 0.397,
+        "information": 0.296,
+        "infrastructure": 0.044,
+        "none": 0.172
+      }
+    }
+  },
+  "measures": [
+    {
+      "key": "likert",
+      "label": "Likert fear intensity",
+      "subtitle": "1\u201310 scale",
+      "scale": 10,
+      "interpretation": "Overall expressed fear intensity."
+    },
+    {
+      "key": "survival",
+      "label": "Survival",
+      "subtitle": "physical life and bodily safety",
+      "scale": 1,
+      "interpretation": "Direct threat to physical safety."
+    },
+    {
+      "key": "existential",
+      "label": "Existential dread",
+      "subtitle": "identity, meaning, human uniqueness",
+      "scale": 1,
+      "interpretation": "Fear of human irrelevance or loss of meaning."
+    },
+    {
+      "key": "extinction",
+      "label": "Global extinction",
+      "subtitle": "species-level or civilization-ending risk",
+      "scale": 1,
+      "interpretation": "Fear of end-of-civilization outcomes."
+    },
+    {
+      "key": "economic",
+      "label": "Economic crisis",
+      "subtitle": "jobs, labor, deprivation, financial instability",
+      "scale": 1,
+      "interpretation": "Fear of job loss or economic disruption."
+    },
+    {
+      "key": "instability",
+      "label": "Geopolitical instability",
+      "subtitle": "war, national security, arms races, chaos",
+      "scale": 1,
+      "interpretation": "Fear of political conflict, arms races, or national security instability."
+    },
+    {
+      "key": "surveillance",
+      "label": "Surveillance",
+      "subtitle": "privacy loss, tracking, monitoring",
+      "scale": 1,
+      "interpretation": "Fear of monitoring, tracking, and loss of autonomy."
+    },
+    {
+      "key": "delegated",
+      "label": "Delegated agency / loss of human control",
+      "subtitle": "humans transferring decisions to systems",
+      "scale": 1,
+      "interpretation": "Fear that judgment or authority is moved from humans to AI systems."
+    },
+    {
+      "key": "information",
+      "label": "Information disorder",
+      "subtitle": "misinformation, deepfakes, synthetic media",
+      "scale": 1,
+      "interpretation": "Fear of deception, misinformation, or collapse of trust."
+    },
+    {
+      "key": "infrastructure",
+      "label": "Infrastructure anxiety",
+      "subtitle": "data centers, energy, water, grids, chips",
+      "scale": 1,
+      "interpretation": "Fear of AI's material and environmental footprint."
+    },
+    {
+      "key": "none",
+      "label": "None",
+      "subtitle": "little or no fear detected",
+      "scale": 1,
+      "interpretation": "Low-fear or neutral framing."
+    }
+  ]
+}
+  </script>
+
+  <header class="page">
+    <div class="hero">
+      <div class="eyebrow">Auto-updating research dashboard</div>
+      <h1>How technological fear shifted from Cold War annihilation to AI delegation</h1>
+      <p>
+        This dashboard compares Cold War nuclear fear, AI fear in 2025, and a latest AI sample that can be
+        refreshed every month by GitHub Actions. The automated update runs the scraper, codes new AI articles,
+        and writes the new AI results back into this <code>index.html</code> file.
+      </p>
+      <div class="hero-meta" aria-label="Study metadata">
+        <span class="pill">1–10 fear intensity scale</span>
+        <span class="pill">10 fear categories</span>
+        <span class="pill">LLM-assisted content analysis</span>
+        <span class="pill" id="lastUpdatedPill">Latest AI baseline</span>
+      </div>
+    </div>
+  </header>
+
+  <nav aria-label="Dashboard navigation">
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#automation">Monthly Update</a></li>
+      <li><a href="#categories">Fear Categories</a></li>
+      <li><a href="#patterns">Dominant Patterns</a></li>
+      <li><a href="#shift">Main Shift</a></li>
+      <li><a href="#table">Data Table</a></li>
+      <li><a href="#method">Method</a></li>
+    </ul>
+  </nav>
+
+  <main class="page">
+    <section id="overview">
+      <div class="section-title">
+        <div>
+          <h2>Fear intensity overview</h2>
+          <p>
+            The mean Likert score shows how strongly fear was expressed in each dataset. The latest AI card
+            is designed to update after each monthly scraper-and-categorizer run.
+          </p>
+        </div>
+      </div>
+      <div class="grid grid-3" id="scoreCards"></div>
+    </section>
+
+    <section id="automation">
+      <div class="grid grid-2">
+        <article class="card automation-card">
+          <h3>Monthly automation status</h3>
+          <p id="automationStatus">The latest AI slot is waiting for the first GitHub Actions run.</p>
+          <div class="stat-line" id="automationStats"></div>
+        </article>
+        <article class="card insight">
+          <h3>Key interpretation</h3>
+          <p>
+            The paper’s central finding is not that technological fear disappeared. Instead, fear changed form.
+            Cold War fear asked whether technology would destroy civilization. AI fear asks whether technology
+            will replace, monitor, mislead, govern, or make decisions for humans.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section id="categories">
+      <div class="section-title">
+        <div>
+          <h2>Category profile across the three periods</h2>
+          <p>
+            Category scores range from 0 to 1. Because one document can contain multiple fears,
+            category percentages do not need to add to 100%.
+          </p>
+        </div>
+      </div>
+      <article class="card chart-panel">
+        <div class="chart-header">
+          <h3>Mean proportion by fear category</h3>
+          <div class="legend" aria-label="Legend" id="legend"></div>
+        </div>
+        <div class="bar-chart" id="categoryChart" aria-label="Horizontal bar chart comparing fear categories"></div>
+      </article>
+    </section>
+
+    <section id="patterns">
+      <div class="section-title">
+        <div>
+          <h2>Dominant fear patterns</h2>
+          <p>
+            These cards show the three strongest fear categories in each dataset.
+          </p>
+        </div>
+      </div>
+      <div class="comparison-cards" id="patternCards"></div>
+    </section>
+
+    <section id="shift">
+      <div class="section-title">
+        <div>
+          <h2>The historical shift in fear framing</h2>
+          <p>The strongest comparison is not only between scores, but between the kinds of risks each era imagines.</p>
+        </div>
+      </div>
+      <div class="shift">
+        <div class="shift-box">
+          <h3>Cold War fear pattern</h3>
+          <p>Focused on sudden, visible, physical destruction: death, fallout, nuclear attack, civil defense, arms races, and the possible end of civilization.</p>
+          <div class="tag-row"><span class="tag">Survival threat</span><span class="tag">Global extinction</span><span class="tag">Geopolitical crisis</span></div>
+        </div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="shift-box">
+          <h3>AI fear pattern</h3>
+          <p>Focused on gradual and system-level disruption: replacement, misinformation, surveillance, delegated decision-making, data centers, energy use, and institutional control.</p>
+          <div class="tag-row"><span class="tag">Delegation</span><span class="tag">Information trust</span><span class="tag">Infrastructure</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="table">
+      <div class="section-title">
+        <div>
+          <h2>Exact values used in this dashboard</h2>
+          <p>The latest AI column is rewritten by the monthly update script after categorization finishes.</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Measure</th>
+              <th class="num">Cold War</th>
+              <th class="num">AI 2025</th>
+              <th class="num" id="latestTableHeader">Latest AI</th>
+              <th>Largest value</th>
+              <th>Interpretation</th>
+            </tr>
+          </thead>
+          <tbody id="dataTable"></tbody>
+        </table>
+      </div>
+      <p class="number-note">Note: category values are proportions from 0 to 1; the Likert row uses a 1–10 intensity scale.</p>
+    </section>
+
+    <section id="method">
+      <div class="section-title">
+        <div>
+          <h2>Method and automation summary</h2>
+          <p>The static website is updated by a scheduled GitHub Actions workflow, not by JavaScript running in the browser.</p>
+        </div>
+      </div>
+      <div class="grid grid-2">
+        <article class="card">
+          <h3>Monthly workflow</h3>
+          <ul class="method-list">
+            <li><strong>1. Discover and scrape current AI articles</strong>The workflow runs <code>scrape_ai_articles.py</code> with recent discovery for the last four weeks.</li>
+            <li><strong>2. Categorize fear</strong>The workflow runs <code>categorize_scraped_texts.py</code>, which produces an overall CSV with the mean Likert score and category proportions.</li>
+            <li><strong>3. Update the dashboard</strong><code>update_dashboard_from_results.py</code> reads the CSV and rewrites the latest AI values embedded in this <code>index.html</code>.</li>
+          </ul>
+        </article>
+        <article class="card">
+          <h3>Limits to keep in mind</h3>
+          <p>
+            The latest monthly scores depend on which articles are discoverable and successfully scraped.
+            Paywalls, blocked pages, source selection, and model interpretation can affect the results.
+            For paper-level consistency, increase the workflow’s coding runs to 25.
+          </p>
+          <div class="tag-row"><span class="tag">LLM-assisted coding</span><span class="tag">Monthly sample</span><span class="tag">Public discourse</span></div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="page">
+    <div class="footgrid">
+      <div><strong>Dashboard source:</strong> Cold War vs. AI fear research paper and monthly scraped AI article updates.</div>
+      <div>Designed as a single-file GitHub Pages dashboard. Keep this file named <strong>index.html</strong> in the repository root.</div>
+    </div>
+  </footer>
+
+  <script>
+    const dashboardData = JSON.parse(document.getElementById("dashboard-data").textContent);
+    const datasetKeys = ["cold", "ai25", "latest"];
+
+    function pct(value, scale = 1) { return Math.max(0, Math.min(100, (Number(value) / scale) * 100)); }
+    function fmt(value, scale = 1) { return scale === 10 ? Number(value).toFixed(3) : (Number(value) * 100).toFixed(1) + "%"; }
+    function labelFor(key) { return dashboardData.datasets[key].label; }
+    function cssFor(key) { return dashboardData.datasets[key].className; }
+
+    function makeBar(value, scale, className, label) {
+      const width = pct(value, scale);
+      return `<div class="bar-track" aria-label="${label}: ${fmt(value, scale)}"><div class="bar ${className}" data-width="${width.toFixed(2)}">${fmt(value, scale)}</div></div>`;
+    }
+
+    function topCategories(datasetKey, n = 3) {
+      const values = dashboardData.datasets[datasetKey].values;
+      return dashboardData.measures
+        .filter(m => m.scale === 1 && m.key !== "none")
+        .map(m => ({...m, value: Number(values[m.key] || 0)}))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, n);
+    }
+
+    function renderScoreCards() {
+      const icons = { cold: "☢️", ai25: "🤖", latest: "🛰️" };
+      document.getElementById("scoreCards").innerHTML = datasetKeys.map(key => {
+        const d = dashboardData.datasets[key];
+        const score = d.values.likert;
+        return `<article class="card score-card ${d.className}">
+          <div>
+            <div class="period-label">${d.label}</div>
+            <div class="big-score">${Number(score).toFixed(2)}<span>/10</span></div>
+            <p>${d.summary}</p>
+          </div>
+          <div class="mini-bar" aria-label="${d.label} mean fear score"><span class="mini-fill ${d.className}-fill" data-width="${pct(score, 10).toFixed(2)}"></span></div>
+          <div class="tag-row">${(d.tags || []).map(t => `<span class="tag">${t}</span>`).join("")}</div>
+        </article>`;
+      }).join("");
+    }
+
+    function renderAutomation() {
+      const a = dashboardData.automation || {};
+      document.getElementById("lastUpdatedPill").textContent = dashboardData.latestPeriod + " • " + dashboardData.lastUpdated;
+      document.getElementById("automationStatus").innerHTML = `<strong>${dashboardData.latestPeriod}</strong><br>${dashboardData.methodNote}<br><span style="color:var(--muted)">Last update: ${dashboardData.lastUpdated}</span>`;
+      const stats = [
+        [a.documents ?? "—", "coded documents"],
+        [a.codedRows ?? "—", "model rows"],
+        [a.scrapedOk ?? "—", "successful scrapes"],
+        [a.sourcesFound ?? "—", "sources found"]
+      ];
+      document.getElementById("automationStats").innerHTML = stats.map(([v, label]) => `<div class="stat"><strong>${v}</strong><span>${label}</span></div>`).join("");
+    }
+
+    function renderLegend() {
+      document.getElementById("legend").innerHTML = datasetKeys.map(key => `<span class="legend-item"><span class="swatch" style="background:var(--${cssFor(key)})"></span>${labelFor(key)}</span>`).join("");
+      document.getElementById("latestTableHeader").textContent = dashboardData.datasets.latest.label;
+    }
+
+    function renderChart() {
+      const categoryMeasures = dashboardData.measures.filter(d => d.scale === 1);
+      document.getElementById("categoryChart").innerHTML = `<div class="axis"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>` +
+      categoryMeasures.map(m => `<div class="bar-row">
+        <div class="bar-label">${m.label}<small>${m.subtitle}</small></div>
+        <div class="bars">
+          ${datasetKeys.map(key => makeBar(dashboardData.datasets[key].values[m.key], m.scale, cssFor(key), labelFor(key) + " " + m.label)).join("")}
+        </div>
+      </div>`).join("");
+    }
+
+    function renderPatternCards() {
+      const icons = { cold: "☢️", ai25: "🤖", latest: "🛰️" };
+      document.getElementById("patternCards").innerHTML = datasetKeys.map(key => {
+        const d = dashboardData.datasets[key];
+        const top = topCategories(key, 3);
+        return `<article class="card focus-card ${d.className}"><div>
+          <div class="icon" aria-hidden="true">${icons[key]}</div>
+          <h3>${d.label}</h3>
+          <p>${d.summary}</p>
+          <ul>${top.map(t => `<li><span>${t.label}</span><strong>${fmt(t.value, 1)}</strong></li>`).join("")}</ul>
+        </div></article>`;
+      }).join("");
+    }
+
+    function renderTable() {
+      document.getElementById("dataTable").innerHTML = dashboardData.measures.map(m => {
+        const values = datasetKeys.map(key => ({ key, name: labelFor(key), value: Number(dashboardData.datasets[key].values[m.key] || 0) }));
+        const max = values.reduce((a, b) => b.value > a.value ? b : a, values[0]);
+        const latest = dashboardData.datasets.latest.values[m.key];
+        const ai25 = dashboardData.datasets.ai25.values[m.key];
+        const change = latest - ai25;
+        const trend = change >= 0 ? `<span class="up">↑ higher than AI 2025</span>` : `<span class="down">↓ lower than AI 2025</span>`;
+        return `<tr>
+          <td><strong>${m.label}</strong><br><span style="color:var(--muted)">${m.subtitle}</span></td>
+          ${values.map(v => `<td class="num">${fmt(v.value, m.scale)}</td>`).join("")}
+          <td>${max.name}</td>
+          <td>${m.interpretation}<br>${trend}</td>
+        </tr>`;
+      }).join("");
+    }
+
+    function animateBars() {
+      document.querySelectorAll("[data-width]").forEach(el => requestAnimationFrame(() => { el.style.width = el.getAttribute("data-width") + "%"; }));
+    }
+
+    renderScoreCards();
+    renderAutomation();
+    renderLegend();
+    renderChart();
+    renderPatternCards();
+    renderTable();
+    window.addEventListener("load", animateBars);
+  </script>
+</body>
+</html>
