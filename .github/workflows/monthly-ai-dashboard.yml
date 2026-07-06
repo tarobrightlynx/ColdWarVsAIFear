@@ -1,0 +1,85 @@
+name: Monthly AI Fear Dashboard Update
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Runs on the 1st day of each month at 15:00 UTC.
+    - cron: "0 15 1 * *"
+
+permissions:
+  contents: write
+
+jobs:
+  update-dashboard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    env:
+      # Use 25 to match the paper-level repeated-run method; 5 is cheaper and faster for dashboard monitoring.
+      CODING_RUNS: "5"
+      DISCOVERY_WEEKS: "4"
+      MAX_DISCOVERED_PER_QUERY: "6"
+      DISCOVERY_PROVIDER: "google_news"
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Scrape recent AI articles
+        run: |
+          python scrape_ai_articles.py \
+            --weeks "$DISCOVERY_WEEKS" \
+            --no-builtins \
+            --out monthly_ai_scrape \
+            --discover-provider "$DISCOVERY_PROVIDER" \
+            --max-discovered-per-query "$MAX_DISCOVERED_PER_QUERY" \
+            --delay 2 \
+            --export-sources
+
+      - name: Categorize scraped AI articles
+        run: |
+          python categorize_scraped_texts.py \
+            --texts-dir monthly_ai_scrape/texts \
+            --out ai_categorized_monthly \
+            --runs "$CODING_RUNS" \
+            --model gpt-4o-mini \
+            --no-key-prompt
+
+      - name: Update index.html with latest AI results
+        run: |
+          PERIOD_LABEL="Latest AI monthly update ($(date -u +'%B %Y'))"
+          python update_dashboard_from_results.py \
+            --index index.html \
+            --overall ai_categorized_monthly/TableOverallAIStats_Expanded.csv \
+            --scrape-metadata monthly_ai_scrape/metadata.csv \
+            --sources monthly_ai_scrape/sources_used.csv \
+            --period-label "$PERIOD_LABEL" \
+            --coding-runs "$CODING_RUNS" \
+            --output index.html
+
+      - name: Archive monthly CSV outputs
+        run: |
+          RUN_MONTH=$(date -u +'%Y-%m')
+          mkdir -p "dashboard_data/$RUN_MONTH"
+          cp ai_categorized_monthly/TableOverallAIStats_Expanded.csv "dashboard_data/$RUN_MONTH/overall_stats.csv"
+          cp ai_categorized_monthly/TableAIStats_Expanded.csv "dashboard_data/$RUN_MONTH/per_article_stats.csv"
+          cp monthly_ai_scrape/metadata.csv "dashboard_data/$RUN_MONTH/scrape_metadata.csv"
+          cp monthly_ai_scrape/sources_used.csv "dashboard_data/$RUN_MONTH/sources_used.csv"
+
+      - name: Commit dashboard update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html dashboard_data/
+          git commit -m "Update AI fear dashboard for $(date -u +'%Y-%m')" || echo "No changes to commit"
+          git push
