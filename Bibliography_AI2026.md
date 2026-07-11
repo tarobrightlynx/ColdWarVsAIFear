@@ -1,4 +1,4 @@
-## AI 2026
+## AI 2026 April-June
 
 Abasiita D. What the AI fight means for your insurance premiums. Forbes. 2026 Jun 20. Available from: https://www.forbes.com/sites/daraabasiita/2026/06/20/what-the-ai-fight-means-for-your-insurance-premiums/
 
