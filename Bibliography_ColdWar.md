@@ -24,9 +24,7 @@ Davis B. Stepping back from the nuclear threshold. Washington (DC): National Sec
 
 Dr. Spock is worried. Petal Paper. 1962 May 17. Available from: https://www.loc.gov/resource/sn85044791/1962-05-17/ed-1/?dl=page&q=nuclear+nuclear&sp=4
 
-Eisenhower D. Atoms for Peace speech. Vienna: International Atomic Energy Agency; 1953 Apr 16. Available from: https://www.iaea.org/about/history/atoms-for-peace-speech
-
-Eisenhower D. Dwight Eisenhower “Cross of Iron” speech to the American Society of Newspaper Editors. American Rhetoric. 1953 Apr 16. Available from: https://www.americanrhetoric.com/speeches/dwighteisenhowercrossofiron.html
+Eisenhower D. Atoms for Peace speech. Vienna: International Atomic Energy Agency; 1953, Dec 8. Available from: https://www.iaea.org/about/history/atoms-for-peace-speech
 
 Eisenhower D. The chance for peace: address delivered before the American Society of Newspaper Editors. Washington (DC); 1953 Apr 16. Available from: https://www.eisenhowerlibrary.gov/sites/default/files/file/chance_for_peace.pdf
 
@@ -60,7 +58,7 @@ McGeorge B. Summary of the existing plans for emergency use of nuclear weapons. 
 
 McGeorge B. U.S. policy on military actions in a Berlin conflict. Washington (DC): National Security Archive; 1961 Oct 23. Available from: https://nsarchive.gwu.edu/sites/default/files/documents/6895260/National-Security-Archive-Doc-12-National.pdf
 
-Much poisoning of air for now and the future. The People’s Voice. 1969 Aug 22. Available from: https://www.loc.gov/resource/sn86075189/1961-11-10/ed-1/?sp=2&q=nuclear+nuclear+nuclear
+Much poisoning of air for now and the future. The People’s Voice. 1961 Aug 22. Available from: https://www.loc.gov/resource/sn86075189/1961-11-10/ed-1/?sp=2&q=nuclear+nuclear+nuclear
 
 Muller H. About nuclear testing. Evening Star. 1962 Jun 10. Available from: https://www.loc.gov/resource/sn83045462/1962-06-10/ed-1/?sp=153&q=Nuclear+nuclear
 
